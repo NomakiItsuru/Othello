@@ -1,5 +1,7 @@
 package itsu.research.othello.core;
 
+import itsu.research.othello.enemy.RandomEnemy;
+
 /**
  * 2018/8/13
  * H30 栃木高校　1年　野牧　樹
@@ -12,16 +14,16 @@ public class Main {
 
     public static void main(String args[]) {
         Othello o = new Othello();
-        o.debug();
-        System.out.println(o.getCounts()[0] + ", " + o.getCounts()[1]);
 
         if (!(args.length > 0)) {
-            System.out.println("Arguments count must be one");
+            System.out.println("You must specify arguments for --part1, --part2, --part3, --part4");
             System.exit(1);
         }
 
-        switch (args[0]) {
+        switch (args[0].replaceFirst("--", "")) {
             case "part1": {
+                GameProvider.init(new Othello(), new RandomEnemy(Othello.BLACK), new RandomEnemy(Othello.WHITE));
+                GameProvider.start();
                 break;
             }
 

@@ -1,17 +1,11 @@
 package itsu.research.othello.core;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Othello {
-
-    /*
-    0: none
-    1: black
-    2: white
-
-    8x8
-     */
 
     public static final int NONE = 0;
     public static final int BLACK = 1;
@@ -19,166 +13,151 @@ public class Othello {
 
     private Map<Integer, int[]> board;
 
+    private boolean debug = false;
+
     public Othello() {
         board = new HashMap<>();
         for (int i = 0; i < 8; i++) {
             board.put(i, new int[]{NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE});
         }
 
+        // Set first stone position
+        setFirst(3, 3, WHITE);
+        setFirst(4, 3, BLACK);
+        setFirst(3, 4, BLACK);
         setFirst(4, 4, WHITE);
-        setFirst(5, 4, BLACK);
-        setFirst(4, 5, BLACK);
-        setFirst(5, 5, WHITE);
-
-        set(6, 3, WHITE);
-        set(3, 6, WHITE);
-        set(3, 3, BLACK);
-        set(6, 6, BLACK);
-
-        getCanSetBoards(WHITE);
-        debug();
-
-        set(6, 5, WHITE);
     }
 
-    public String setFirst(int x,int y, int type) {
-        board.get(y - 1)[x - 1] = type;
+    private String setFirst(int x, int y, int type) {
+        board.get(y)[x] = type;
         return "X: " + x + " Y: " + y + " TYPE: " + type;
     }
+
 
     public String set(int x, int y, int type) {
-        if (x > 8 || y > 8 || x < 1 || y < 1) {
-            System.out.println("You must specify the value from 1 to 8");
-            return null;
+        if (x > 7 || y > 7 || x < 0 || y < 0) {
+            throw new IllegalArgumentException("You must specify the value from 1 to 8");
         }
 
-        if (board.get(y - 1)[x - 1] != 0) {
-            System.out.println("Specified board is already used");
-            return null;
+        if (board.get(y)[x] != 0) {
+            throw new IllegalArgumentException("Specified board is already used");
         }
 
-        board.get(y - 1)[x - 1] = type;
+        Map<String, Object> setData = isCanSetBoard(x, y, type);
 
-        // horizontal
-        int x1 = x;
-        while (true) {
-            x1--;
+        if (setData == null) return "Cannot place the stone.";
 
-            if (x1 < 1) break;
-            if (board.get(y - 1)[x1 - 1] == type || board.get(y - 1)[x1 - 1] == NONE) break;
+        board.get(y)[x] = type;
+        int oppositeType = type == WHITE ? BLACK : WHITE;
 
-            board.get(y - 1)[x1 - 1] = type;
-        }
+        for (Map.Entry entry : setData.entrySet()) {
+            if (((String) entry.getKey()).contains("Count")) continue;
+            if (entry.getKey().equals("x") || entry.getKey().equals("y")) continue;
+            if (!(boolean) entry.getValue()) continue;
 
-        int x2 = x;
-        while (true) {
-            x2++;
+            switch (String.valueOf(entry.getKey())) {
+                case "left": {
+                    int x1 = x;
+                    while (true) {
+                        x1--;
 
-            if (x1 > 9) break;
-            if (board.get(y - 1)[x2 - 1] == type || board.get(y - 1)[x2 - 1] == NONE) break;
+                        if (x1 < 0 || board.get(y)[x1] != oppositeType) break;
+                        else board.get(y)[x1] = type;
+                    }
+                }
 
-            board.get(y - 1)[x2 - 1] = type;
-        }
+                case "right": {
+                    int x1 = x;
+                    while (true) {
+                        x1++;
 
-        // vertical
-        int y1 = y;
-        while (true) {
-            y1--;
+                        if (x1 > 7 || board.get(y)[x1] != oppositeType) break;
+                        else board.get(y)[x1] = type;
+                    }
+                }
 
-            if (y1 < 1) break;
-            if (board.get(y1 - 1)[x - 1] == type || board.get(y1 - 1)[x - 1] == NONE) break;
+                case "up": {
+                    int y1 = y;
+                    while (true) {
+                        y1--;
 
-            board.get(y1 - 1)[x - 1] = type;
-        }
+                        if (y1 < 0 || board.get(y1)[x] != oppositeType) break;
+                        else board.get(y1)[x] = type;
+                    }
+                }
 
-        int y2 = y;
-        while (true) {
-            y2++;
+                case "down": {
+                    int y1 = y;
+                    while (true) {
+                        y1++;
 
-            if (y2 > 9) break;
-            if (board.get(y2 - 1)[x - 1] == type || board.get(y2 - 1)[x - 1] == NONE) break;
+                        if (y1 < 0 || board.get(y1)[x] != oppositeType) break;
+                        else board.get(y1)[x] = type;
+                    }
+                }
 
-            board.get(y2 - 1)[x - 1] = type;
-        }
+                case "leftUp": {
+                    int x1 = x;
+                    int y1 = y;
+                    while (true) {
+                        x1--;
+                        y1--;
 
-        // diagonal
-        // left up
-        int x3 = x;
-        int y3 = y;
-        while (true) {
-            x3--;
-            y3++;
+                        if (x1 < 0 || y1 < 0 || board.get(y1)[x1] != oppositeType) break;
+                        else board.get(y1)[x1] = type;
+                    }
+                }
 
-            if (x3 < 1 || y3 > 9) break;
-            if (board.get(y3 - 1)[x3 - 1] == type || board.get(y3 - 1)[x3 - 1] == NONE) break;
+                case "rightUp": {
+                    int x1 = x;
+                    int y1 = y;
+                    while (true) {
+                        x1++;
+                        y1--;
 
-            board.get(y3 - 1)[x3 - 1] = type;
-        }
-        
-        // right up
-        int x4= x;
-        int y4 = y;
-        while (true) {
-            x4++;
-            y4--;
+                        if (x1 > 7 || y1 < 0 || board.get(y1)[x1] != oppositeType) break;
+                        else board.get(y1)[x1] = type;
+                    }
+                }
 
-            if (x4 > 9 || y4 < 1) break;
-            if (board.get(y4 - 1)[x4 - 1] == type || board.get(y4 - 1)[x4 - 1] == NONE) break;
+                case "leftDown": {
+                    int x1 = x;
+                    int y1 = y;
+                    while (true) {
+                        x1--;
+                        y1++;
 
-            board.get(y4 - 1)[x4 - 1] = type;
-        }
-        
-        // right down
-        int x5= x;
-        int y5 = y;
-        while (true) {
-            x5++;
-            y5++;
+                        if (x1 < 0 || y1 > 7 || board.get(y1)[x1] != oppositeType) break;
+                        else board.get(y1)[x1] = type;
+                    }
+                }
 
-            if (x5 > 9 || y5 > 9) break;
-            if (board.get(y5 - 1)[x5 - 1] == type || board.get(y5 - 1)[x5 - 1] == NONE) break;
+                case "rightDown": {
+                    int x1 = x;
+                    int y1 = y;
+                    while (true) {
+                        x1++;
+                        y1++;
 
-            board.get(y5 - 1)[x5 - 1] = type;
-        }
-        
-        // left down
-        int x6= x;
-        int y6 = y;
-        while (true) {
-            x6--;
-            y6--;
-
-            if (x6 < 1 || y6 < 1) break;
-            if (board.get(y6 - 1)[x6 - 1] == type || board.get(y6 - 1)[x6 - 1] == NONE) break;
-
-            board.get(y6 - 1)[x6 - 1] = type;
+                        if (x1 > 7 || y1 > 7 || board.get(y1)[x1] != oppositeType) break;
+                        else board.get(y1)[x1] = type;
+                    }
+                }
+            }
         }
         
         return "X: " + x + " Y: " + y + " TYPE: " + type;
     }
 
-    /*
-    int [0] = x
-    int [1] = y
-    int [2] = direction
+    public List<Map<String, Object>> getCanSetBoards(int type) {
+        List<Map<String, Object>> result = new ArrayList<>();
 
-    direction
-    0: left
-    1: up
-    2: right
-    3: down
-    4: cannot place
-     */
-    public Map<Integer, Map<String, Object>> getCanSetBoards(int type) {
-        Map<Integer, Map<String, Object>> result = new HashMap<>();
-        int index = 0;
-
-        for (int x = 1; x < 9; x++) {
-            for (int y = 1; y < 9; y++) {
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
                 Map<String, Object> data = isCanSetBoard(x, y, type);
                 if (data != null) {
-                    result.put(index, data);
-                    index++;
+                    if (debug) System.out.println(x + ", " + y + "  " + data.toString());
+                    result.add(data);
                 }
             }
         }
@@ -187,36 +166,63 @@ public class Othello {
     }
 
     private Map<String, Object> isCanSetBoard(int x, int y, int type) {
-        if (board.get(y - 1)[x - 1] != 0) return null;
+        if (board.get(y)[x] != NONE) return null;
 
         Map<String, Object> data = new HashMap<>();
         Map<String, Object> copy = new HashMap<>();
 
-        if (x - 2 < 0 || board.get(y - 1)[x - 2] == NONE) {
+        int oppositeType = type == BLACK ? WHITE : BLACK;
+
+        if (x - 2 < 0 || board.get(y)[x - 1] != oppositeType) {
             data.put("left", false);
             data.put("leftCount", 0);
         }
         else data.put("left", true);
 
-        if (x > 7 || board.get(y - 1)[x] == NONE) {
+        if (x + 2 > 7 || board.get(y)[x + 1] != oppositeType) {
             data.put("right", false);
             data.put("rightCount", 0);
         }
         else data.put("right", true);
 
-        if (y - 2 < 0 || board.get(y - 2)[x - 1] == NONE) {
+        if (y - 2 < 0 || board.get(y - 1)[x] != oppositeType) {
             data.put("up", false);
             data.put("upCount", 0);
         }
         else data.put("up", true);
 
-        if (y > 7 || board.get(y)[x - 1] == NONE) {
+        if (y + 2 > 7 || board.get(y + 1)[x] != oppositeType) {
             data.put("down", false);
             data.put("downCount", 0);
         }
         else data.put("down", true);
 
-        if (!(boolean) data.get("left") && !(boolean) data.get("right") && !(boolean) data.get("up") && !(boolean) data.get("down")) {
+        if (x - 2 < 0 || y - 2 < 0 || board.get(y - 1)[x - 1] != oppositeType) {
+            data.put("leftUp", false);
+            data.put("leftUpCount", 0);
+        }
+        else data.put("leftUp", true);
+
+        if (x + 2 > 7 || y - 2 < 0 || board.get(y - 1)[x + 1] != oppositeType) {
+            data.put("rightUp", false);
+            data.put("rightUpCount", 0);
+        }
+        else data.put("rightUp", true);
+
+        if (x - 2 < 0 || y + 2 > 7 || board.get(y + 1)[x - 1] != oppositeType) {
+            data.put("leftDown", false);
+            data.put("leftDownCount", 0);
+        }
+        else data.put("leftDown", true);
+
+        if (x + 2 > 7 || y + 2 > 7 || board.get(y + 1)[x + 1] != oppositeType) {
+            data.put("rightDown", false);
+            data.put("rightDownCount", 0);
+        }
+        else data.put("rightDown", true);
+
+        if (!(boolean) data.get("left") && !(boolean) data.get("right") && !(boolean) data.get("up") && !(boolean) data.get("down")
+                && !(boolean) data.get("leftUp") && !(boolean) data.get("rightUp") && !(boolean) data.get("leftDown") && !(boolean) data.get("rightDown")) {
             return null;
         }
 
@@ -227,97 +233,188 @@ public class Othello {
             if (!(boolean) entry.getValue()) continue;
 
             boolean isAvailable = false;
-            int oppositeType = type == BLACK ? WHITE : BLACK;
             int count = 0;
 
             switch ((String) entry.getKey()) {
                 case "left": {
-                    int x1 = x;
+                    int x1 = x - 1;
+                    int x2 = x1 - 1;
 
-                    if (x - 2 < 0) break;
-                    if (board.get(y - 1)[x - 2] == type) break;
+                    while(x2 > -1) {
+                        if (board.get(y)[x2] == type) isAvailable = true;
+                        x2--;
+                    }
 
-                    while (true) {
-                        x1--;
-                        if (x1 - 1 < 0) break;
-
-                        count++;
-
-                        if (board.get(y - 1)[x1 - 1] == type) {
-                            isAvailable = true;
-                            break;
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y)[x1] == oppositeType) count++;
+                            else if (board.get(y)[x1] == type) break;
+                            x1--;
                         }
-
-                        if (board.get(y - 1)[x1 - 1] == NONE) break;
                     }
 
                     break;
                 }
 
                 case "right": {
-                    int x1 = x;
+                    int x1 = x + 1;
+                    int x2 = x1 + 1;
 
-                    if (x > 7) break;
-                    if (board.get(y - 1)[x] == type) break;
+                    while(x2 < 8) {
+                        if (board.get(y)[x2] == type) isAvailable = true;
+                        x2++;
+                    }
 
-                    while (true) {
-                        x1++;
-                        if (x1 > 7) break;
-
-                        count++;
-
-                        if (board.get(y - 1)[x1 - 1] == type) {
-                            isAvailable = true;
-                            break;
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y)[x1] == oppositeType) count++;
+                            else if (board.get(y)[x1] == type) break;
+                            x1++;
                         }
-
-                        if (board.get(y - 1)[x1 - 1] == NONE) break;
                     }
 
                     break;
                 }
 
                 case "up": {
-                    int y1 = y;
+                    int y1 = y - 1;
+                    int y2 = y1 - 1;
 
-                    if (y - 2 < 0) break;
-                    if (board.get(y - 2)[x - 1] == type) break;
+                    while(y2 > -1) {
+                        if (board.get(y2)[x] == type) isAvailable = true;
+                        y2--;
+                    }
 
-                    while (true) {
-                        y1--;
-                        if (y1 - 1 < 0) break;
-
-                        count++;
-
-                        if (board.get(y1 - 1)[x - 1] == type) {
-                            isAvailable = true;
-                            break;
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y1)[x] == oppositeType) count++;
+                            else if (board.get(y1)[x] == type) break;
+                            y1--;
                         }
-
-                        if (board.get(y1 - 1)[x - 1] == NONE) break;
                     }
 
                     break;
                 }
 
                 case "down": {
-                    int y1 = y;
+                    int y1 = y + 1;
+                    int y2 = y1 + 1;
 
-                    if (y > 7) break;
-                    if (board.get(y)[x - 1] == type) break;
+                    while(y2 < 8) {
+                        if (board.get(y2)[x] == type) isAvailable = true;
+                        y2++;
+                    }
 
-                    while (true) {
-                        y1++;
-                        if (y1 > 7) break;
-
-                        count++;
-
-                        if (board.get(y1 - 1)[x - 1] == type) {
-                            isAvailable = true;
-                            break;
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y1)[x] == oppositeType) count++;
+                            else if (board.get(y1)[x] == type) break;
+                            y1++;
                         }
+                    }
 
-                        if (board.get(y1 - 1)[x - 1] == NONE) break;
+                    break;
+                }
+
+                case "leftUp": {
+                    int x1 = x - 1;
+                    int x2 = x1 - 1;
+                    int y1 = y - 1;
+                    int y2 = y1 - 1;
+
+                    while(true) {
+                        if (x2 < 0 || y2 < 0) break;
+
+                        if (board.get(y2)[x2] == type) isAvailable = true;
+                        x2--;
+                        y2--;
+                    }
+
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y1)[x1] == oppositeType) count++;
+                            else if (board.get(y1)[x1] == type) break;
+                            x1--;
+                            y1--;
+                        }
+                    }
+
+                    break;
+                }
+
+                case "rightUp": {
+                    int x1 = x + 1;
+                    int x2 = x1 + 1;
+                    int y1 = y - 1;
+                    int y2 = y1 - 1;
+
+                    while(true) {
+                        if (x2 > 7 || y2 < 0) break;
+
+                        if (board.get(y2)[x2] == type) isAvailable = true;
+                        x2++;
+                        y2--;
+                    }
+
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y1)[x1] == oppositeType) count++;
+                            else if (board.get(y1)[x1] == type) break;
+                            x1++;
+                            y1--;
+                        }
+                    }
+
+                    break;
+                }
+
+                case "leftDown": {
+                    int x1 = x - 1;
+                    int x2 = x1 - 1;
+                    int y1 = y + 1;
+                    int y2 = y1 + 1;
+
+                    while(true) {
+                        if (x2 < 0 || y2 > 7) break;
+
+                        if (board.get(y2)[x2] == type) isAvailable = true;
+                        x2--;
+                        y2++;
+                    }
+
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y1)[x1] == oppositeType) count++;
+                            else if (board.get(y1)[x1] == type) break;
+                            x1--;
+                            y1++;
+                        }
+                    }
+
+                    break;
+                }
+
+                case "rightDown": {
+                    int x1 = x + 1;
+                    int x2 = x1 + 1;
+                    int y1 = y + 1;
+                    int y2 = y1 + 1;
+
+                    while(true) {
+                        if (x2 > 7 || y2 > 7) break;
+
+                        if (board.get(y2)[x2] == type) isAvailable = true;
+                        x2++;
+                        y2++;
+                    }
+
+                    if (isAvailable) {
+                        while (true) {
+                            if (board.get(y1)[x1] == oppositeType) count++;
+                            else if (board.get(y1)[x1] == type) break;
+                            x1++;
+                            y1++;
+                        }
                     }
 
                     break;
@@ -325,50 +422,50 @@ public class Othello {
             }
 
             data.put((String) entry.getKey(), isAvailable);
-            data.put(entry.getKey() + "Count", isAvailable ? count - 1 : 0);
+            data.put(entry.getKey() + "Count", isAvailable ? count : 0);
+            data.put("x", x);
+            data.put("y", y);
 
-            if (!(boolean) data.get("left") && !(boolean) data.get("right") && !(boolean) data.get("up") && !(boolean) data.get("down")) {
+            if (!(boolean) data.get("left") && !(boolean) data.get("right") && !(boolean) data.get("up") && !(boolean) data.get("down")
+                    && !(boolean) data.get("leftUp") && !(boolean) data.get("rightUp") && !(boolean) data.get("leftDown") && !(boolean) data.get("rightDown")) {
                 return null;
             }
         }
 
-        System.out.println(x + ", " + y + "  " + data.toString());
-
         return data;
     }
 
-    public int[] getCounts() {
-        int black = 0;
-        int white = 0;
+    public int getCount(int x, int y, int type) {
+        int count = 0;
 
-        for (Map.Entry entry : board.entrySet()) {
-            int[] value = (int[]) entry.getValue();
-            for (int i : value) {
-                switch (i) {
-                    case BLACK: {
-                        black++;
-                        break;
-                    }
+        for (Map.Entry entry : isCanSetBoard(x, y, type).entrySet()) {
+            if (!String.valueOf(entry.getKey()).contains("Count")) continue;
+            count += Integer.parseInt(String.valueOf(entry.getValue()));
+        }
 
-                    case WHITE: {
-                        white++;
-                        break;
-                    }
-                }
+        return count;
+    }
+
+    public int getSettableCounts() {
+        int count = 0;
+
+        for (Integer y : board.keySet()) {
+            for (int x : (int[]) board.get(y)) {
+                if (x == NONE) count++;
             }
         }
 
-        return new int[] {black, white};
+        return count;
     }
 
     public void debug() {
-        System.out.println("  1  2  3  4  5  6  7  8");
-        System.out.println("------------------------");
+        System.out.println("   0  1  2  3  4  5  6  7");
+        System.out.println("-------------------------");
 
-        int num = 1;
+        int num = 0;
         for (Map.Entry entry : board.entrySet()) {
             int[] y = (int[]) entry.getValue();
-            System.out.println(num + "|" + y[0] + ", " + y[1] + ", " + y[2] + ", " + y[3] + ", " + y[4] + ", " + y[5] + ", " + y[6] + ", " + y[7]);
+            System.out.println(num + "| " + y[0] + ", " + y[1] + ", " + y[2] + ", " + y[3] + ", " + y[4] + ", " + y[5] + ", " + y[6] + ", " + y[7]);
             num++;
         }
 
