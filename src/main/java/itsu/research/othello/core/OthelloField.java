@@ -30,6 +30,7 @@ public class OthelloField {
                 field.add(new Stone(x, y, EMPTY));
             }
         }
+
         setStone(size / 2 - 1, size / 2 - 1, WHITE);
         setStone(size / 2, size / 2 - 1, BLACK);
         setStone(size / 2 - 1, size / 2, BLACK);

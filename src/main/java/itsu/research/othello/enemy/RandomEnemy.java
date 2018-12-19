@@ -3,11 +3,15 @@ package itsu.research.othello.enemy;
 import itsu.research.othello.core.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class RandomEnemy implements Enemy {
+/**
+ * # Enemy Part1 & Base IEnemy (Black)
+ * @author Nomaki Itsuru
+ */
+
+public class RandomEnemy implements IEnemy {
 
     private int type;
 
@@ -26,7 +30,7 @@ public class RandomEnemy implements Enemy {
             GameProvider.onSet(this, true);
 
         } else {
-            int index = new Random().nextInt(settableResults.size() - 1);
+            int index = new Random().nextInt(settableResults.size());
 
             field.change(settableResults.get(index).getStone().getPosition().getX(), settableResults.get(index).getStone().getPosition().getY(), type, settableResults.get(index).getSettableStones());
 
