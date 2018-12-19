@@ -1,13 +1,17 @@
 package itsu.research.othello.enemy;
 
-import itsu.research.othello.core.GameProvider;
-import itsu.research.othello.core.Othello;
+import itsu.research.othello.core.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
-public class RandomEnemy implements Enemy {
+/**
+ * # Enemy Part1 & Base IEnemy (Black)
+ * @author Nomaki Itsuru
+ */
+
+public class RandomEnemy implements IEnemy {
 
     private int type;
 
@@ -16,21 +20,22 @@ public class RandomEnemy implements Enemy {
     }
 
     @Override
-    public void set(Othello othello) {
-        List<Map<String, Object>> boardData = othello.getCanSetBoards(type);
+    public void set(OthelloField field) {
+        List<SettableResult> settableResults = field.getSettablePlaces(type)
+                .stream()
+                .filter(result -> result.isSettable())
+                .collect(Collectors.toList());
 
-        if (boardData.size() == 0) {
-            GameProvider.onSet(this);
+        if (settableResults.size() - 1 <= 0) {
+            GameProvider.onSet(this, true);
+
+        } else {
+            int index = new Random().nextInt(settableResults.size());
+
+            field.change(settableResults.get(index).getStone().getPosition().getX(), settableResults.get(index).getStone().getPosition().getY(), type, settableResults.get(index).getSettableStones());
+
+            GameProvider.onSet(this, false);
         }
-
-        int index = new Random().nextInt(boardData.size() - 1);
-        int x = Integer.parseInt(String.valueOf(boardData.get(index).get("x")));
-        int y = Integer.parseInt(String.valueOf(boardData.get(index).get("y")));
-
-        System.out.println(othello.set(x, y, type));
-        othello.debug();
-
-        GameProvider.onSet(this);
     }
 
     @Override
