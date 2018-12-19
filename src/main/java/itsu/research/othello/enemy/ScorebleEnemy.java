@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * # Enemy Part2
+ * # Enemy Part4
  * @author Nomaki Itsuru
  */
 
